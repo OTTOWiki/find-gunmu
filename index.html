@@ -497,7 +497,7 @@ function makeFallback(){
 playerRoot.add(makeFallback());
 if(THREE.GLTFLoader){
   try{
-    new THREE.GLTFLoader().load('/daoli.glb',function(gltf){
+    new THREE.GLTFLoader().load('./daoli.glb',function(gltf){
       try{
         var m=gltf.scene;
         var box=new THREE.Box3().setFromObject(m);
