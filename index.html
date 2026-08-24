@@ -575,7 +575,7 @@ var waaoMat=new THREE.SpriteMaterial({map:ghostTex,transparent:true,depthWrite:f
 var itemImgs=[],itemBodies=[];
 if(THREE.TextureLoader){
   var texLoader=new THREE.TextureLoader();
-  texLoader.load('/gunmu.png',function(t){
+  texLoader.load('./gunmu.png',function(t){
     t.encoding=THREE.sRGBEncoding;
     gunmuOK=true;
     gunmuAspect=(t.image&&t.image.width&&t.image.height)?t.image.width/t.image.height:1;
@@ -586,7 +586,7 @@ if(THREE.TextureLoader){
     }
     for(i=0;i<itemBodies.length;i++)itemBodies[i].visible=false;
   },undefined,function(){diagErr='gunmu.png 加载失败，使用默认棍母';});
-  texLoader.load('/waao.png',function(t){
+  texLoader.load('./waao.png',function(t){
     t.encoding=THREE.sRGBEncoding;
     waaoOK=true;
     waaoAspect=(t.image&&t.image.width&&t.image.height)?t.image.width/t.image.height:1;
