@@ -55,24 +55,6 @@ avifdec gunmu.avif /tmp/rt.png && magick compare -metric AE gunmu.png /tmp/rt.pn
 ### 背景音乐（BGM）
 
 当前随仓库附带 `bgm.m4a`（**composition - Surreal music** · [LorenzoMusician](https://www.youtube.com/watch?v=uI_TF6eXWGY)，
-AAC-LC 44.1 kHz 立体声 · 6:04 · 129 kbps · `moov` 前置可流式播放），由 `assets` 预加载、
-在开局按钮（用户手势）里 `play()` 并 `loop`，跟随主菜单的**声音**开关静音，
-返回主菜单时暂停、下次开局从原位置继续。`js/bgm.js` 不做任何网络请求。
-
-换成自己的音乐：把音频放到根目录并命名 `bgm.m4a`（或 `bgm.mp3`）即可，无需改代码；
-署名文案在 `js/strings.js` 的 `bgmCredit`（仅 BGM 加载成功时才显示）。
-
-> ⚠ **版权**：该曲目来自 YouTube，属标准 YouTube 授权（非 CC）。署名不等于获得授权，
-> 公开部署/商业使用请自行取得权利人许可，或改用 CC0 / CC-BY / 已获授权的音乐并相应更新署名。
-
-重新生成（需要能访问 YouTube 的 yt-dlp，建议用 GitHub 上的新版；本机实测 `--js-runtimes node` + master 分支可绕过部分 403）：
-
-```bash
-# 取音频流（140 = AAC 129k）并重封装为可流式播放的 m4a
-yt-dlp --js-runtimes node -f 140 -o src.m4a "https://www.youtube.com/watch?v=uI_TF6eXWGY"
-ffmpeg -v error -i src.m4a -c copy -movflags +faststart bgm.m4a
-ffprobe bgm.m4a   # 确认 aac / 44100 Hz / stereo / 364s
-```
 
 ---
 
@@ -213,18 +195,6 @@ ES Module 的 `import` 绑定是**只读**的，因此约定：
 
 ---
 
-## 与单文件版本的差异
-
-拆分遵循「原样搬迁」原则：原 MODULE 0–11 的代码按行区间整体切出，逻辑未重写。仅做了以下必要调整：
-
-1. 跨模块共享状态改为「只读导入 + 函数写入」（见上表）。
-2. `resize` 及其窗口监听从 `visuals` 移到 `render` / `main`；`resizeTargets()` 归 `post`。
-3. 场景背景与雾色的更新由 `setupLevel` 移入 `maze.setHue()`。
-4. FPS 统计与诊断文本刷新从主循环抽成 `diag.updateDiagnostics()`。
-5. 删除了从未被读写的死变量 `projMeshes`。
-6. 唯一对外入口由 `window.startGame()` 变为 `boot.js` → `main.js` 的 `initGame()`（不再挂到 window）。
-
----
 
 ## 常见问题
 
