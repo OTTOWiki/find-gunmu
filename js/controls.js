@@ -11,6 +11,7 @@ import { renderer } from './render.js';
 import { state, p, doDash, eatNut, bufferJump } from './physics.js';
 import { throwBox, startRun, gotoMenu } from './entities.js';
 import { isReady } from './assets.js';
+import { startBgm, refreshBgmMute, stopBgm } from './bgm.js';
 
 export const keys={};
 export let touchJump=false;
@@ -90,7 +91,7 @@ export function initControls(){
     if(e.code==='KeyQ')doDash();
     if(e.code==='Space'){e.preventDefault();bufferJump(0.15);}
     // Esc 返回主菜单；指针锁定时先交给浏览器解锁，避免一次按下双重动作
-    if(e.code==='Escape'&&state==='playing'&&!document.pointerLockElement){resetInput();gotoMenu();}
+    if(e.code==='Escape'&&state==='playing'&&!document.pointerLockElement){resetInput();stopBgm();gotoMenu();}
   });
   window.addEventListener('keyup',function(e){keys[e.code]=false;});
 
@@ -124,21 +125,21 @@ export function initControls(){
 
   // 主菜单：两个模式按钮（不再「点任意处开始」）；素材未加载完不可开局
   $('btn-mode-normal').addEventListener('click',function(){
-    if(state!=='start'||!isReady())return;resetInput();initAudio();startRun('normal');
+    if(state!=='start'||!isReady())return;resetInput();initAudio();startBgm();startRun('normal');
   });
   $('btn-mode-practice').addEventListener('click',function(){
-    if(state!=='start'||!isReady())return;resetInput();initAudio();startRun('practice');
+    if(state!=='start'||!isReady())return;resetInput();initAudio();startBgm();startRun('practice');
   });
-  $('btn-sound').addEventListener('click',function(){setMuted(!isMuted());refreshSoundBtn();});
+  $('btn-sound').addEventListener('click',function(){setMuted(!isMuted());refreshSoundBtn();refreshBgmMute();});
   $('btn-retry').addEventListener('click',function(){
-    if(state!=='lost')return;resetInput();initAudio();startRun('normal');
+    if(state!=='lost')return;resetInput();initAudio();startBgm();startRun('normal');
   });
   $('btn-menu').addEventListener('click',function(){
-    if(state!=='lost')return;resetInput();gotoMenu();
+    if(state!=='lost')return;resetInput();stopBgm();gotoMenu();
   });
   // 游戏中退出（飞门过场期间不开放，避免与过场回调打架）
   $('btn-exit').addEventListener('click',function(){
-    if(state!=='playing')return;resetInput();gotoMenu();
+    if(state!=='playing')return;resetInput();stopBgm();gotoMenu();
   });
   refreshSoundBtn();
   setTimeout(function(){var b=$('blank');if(b)b.textContent=STR.blankFound;},900);

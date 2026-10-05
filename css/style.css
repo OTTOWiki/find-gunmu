@@ -143,6 +143,8 @@ body[data-state="gate"]  #screen-gate{opacity:1;pointer-events:auto}
 /* 素材未加载完时开始按钮不可点；不可达素材用警示色提示 */
 #st-loading{margin-top:2px}
 #st-loading:empty{display:none}
+#st-credit{font-size:11px;color:#6d5994}
+#st-credit:empty{display:none}
 body[data-assets="loading"] .menu-btn{opacity:.45;pointer-events:none;filter:grayscale(.4)}
 body[data-assets="partial"] #st-loading{color:#ffaa33}
 .menu-btn{

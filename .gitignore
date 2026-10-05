@@ -1,0 +1,9 @@
+# 编辑器 / 系统杂项
+.DS_Store
+Thumbs.db
+*.swp
+
+# 备用音频名（当前随仓库分发的是 bgm.m4a，见 README「背景音乐」）
+bgm.mp3
+bgm.ogg
+bgm.webm

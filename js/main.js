@@ -16,9 +16,11 @@ import { setupLevel } from './entities.js';
 import { initControls } from './controls.js';
 import { startLoop } from './visuals.js';
 import { preload, assets } from './assets.js';
+import { initBgm } from './bgm.js';
 
 function setLoadText(t){var el=$('st-loading');if(el)el.textContent=t;}
 function setAssetsState(s){document.body.dataset.assets=s;}
+function setCredit(t){var el=$('st-credit');if(el)el.textContent=t;}
 function assetName(key){return (STR.assetNames&&STR.assetNames[key])||key;}
 
 export async function initGame(libStatus){
@@ -53,6 +55,7 @@ export async function initGame(libStatus){
     initWorld();
     setupLevel(1,true);
   }catch(e){showErr(STR.errTagInit,e);}
+  if(initBgm())setCredit(STR.bgmCredit);   // BGM 就绪才显示来源署名
 
   window.addEventListener('resize',resize);
   window.addEventListener('orientationchange',function(){setTimeout(resize,250);});
@@ -60,6 +63,7 @@ export async function initGame(libStatus){
 
   var lost=rep.failed.map(assetName);
   if(lost.length)setLoadText(STR.assetPartial(lost.join('、')));
+  else if(rep.missingOptional.length)setLoadText(STR.assetBgmMissing);
   else setLoadText(STR.assetReady);
   setAssetsState(lost.length?'partial':'ready');
   var missingAll=missing.concat(lost);

@@ -31,17 +31,19 @@ window.GAME_STRINGS = {
   menuRule1: '目标：集齐 5 个棍母 → 飞门轰鸣开启 → 冲进下一层',
   menuRule2: '正式模式 90 秒倒计时，归零即「你迷失了」；练习模式时间不限，被哇袄撞到不再扣时间',
   menuRule3: 'HUD 统计：GPM = 每分钟获得棍母数 ×10 ｜ WAPM = 每分钟被哇袄撞击数 ×10',
-  soundOn: '音效：开',
-  soundOff: '音效：关',
+  soundOn: '声音：开',
+  soundOff: '声音：关',
   btnExit: '退出',
   btnMenu: '返回主菜单',
 
-  // 资源加载（运行库 / 贴图 / 模型）
+  // 资源加载（运行库 / 贴图 / 模型 / BGM）
   assetLoadingLibs: '正在加载运行库...',
   assetLoading: function(done,total){ return '正在加载素材 '+done+'/'+total+' ...'; },
   assetReady: '素材已就绪 · 选择模式开始',
   assetPartial: function(list){ return '⚠ 素材不可达：'+list+'（已启用保底素材）'; },
-  assetNames: {gunmu:'棍母贴图',waao:'哇袄贴图',model:'玩家模型'},
+  assetBgmMissing: '素材已就绪 · 未找到 BGM 音频（可选）',
+  assetNames: {gunmu:'棍母贴图',waao:'哇袄贴图',model:'玩家模型',bgm:'背景音乐'},
+  bgmCredit: 'BGM: composition - Surreal music · LorenzoMusician',
 
   // 结算与飞门
   gateEntering: '进入飞门...',
