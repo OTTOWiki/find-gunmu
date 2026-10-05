@@ -6,6 +6,8 @@
 import { STR } from './strings.js';
 
 const diag = document.getElementById('diag');
+const stLoad = document.getElementById('st-loading');
+function setMenuLoad(t){if(stLoad)stLoad.textContent=t;}
 
 function loadSeq(list){
   return new Promise(function(resolve){
@@ -42,20 +44,25 @@ const TWEEN_LIB=[
 
 (async function boot(){
   diag.textContent=STR.diagLoadingLibs;
+  setMenuLoad(STR.assetLoadingLibs);
 
   var ok=await loadSeq(CORE);
   if(!ok||!window.THREE){
     diag.textContent=STR.diagCoreLibBlocked;
+    setMenuLoad(STR.diagCoreLibBlocked);
     return;
   }
-  await loadSeq(LOADER);
-  await loadSeq(NIPPLE);
-  await loadSeq(TWEEN_LIB);
+  // 逐个等待，尽力在可达的镜像上把运行库全部加载完；结果交给 initGame 做诊断
+  var libStatus={three:true};
+  libStatus.gltf=await loadSeq(LOADER);
+  libStatus.nipple=await loadSeq(NIPPLE);
+  libStatus.tween=await loadSeq(TWEEN_LIB);
 
   try{
     const { initGame }=await import('./main.js');
-    initGame();
+    await initGame(libStatus);
   }catch(e){
     diag.textContent=STR.diagBootErrorPrefix+((e&&e.message)||e);
+    setMenuLoad(STR.diagBootErrorPrefix+((e&&e.message)||e));
   }
 })();

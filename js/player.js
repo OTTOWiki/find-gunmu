@@ -1,11 +1,12 @@
 /* ==========================================================================
    MODULE 6: 玩家模型
-   daoli.glb 模型加载，失败时回退到程序化小人。
+   先用程序化小人占位；daoli.glb 由 assets 预加载完成后，
+   通过 applyPlayerModel 换成正式模型，加载失败则保留保底小人。
    （由原单文件 index.html 拆分而来，模块划分沿用原始 MODULE 编号）
    ========================================================================== */
 
 import { scene, SHADOWS } from './render.js';
-import { showErr, setDiagErr } from './diag.js';
+import { showErr } from './diag.js';
 import { STR } from './strings.js';
 import { p } from './physics.js';
 
@@ -30,25 +31,21 @@ export function initPlayer(){
   playerRoot=new THREE.Group();
   scene.add(playerRoot);
   playerRoot.add(makeFallbackPlayer());
-  if(window.THREE&&THREE.GLTFLoader){
-    try{
-      new THREE.GLTFLoader().load('./daoli.glb',function(gltf){
-        try{
-          var m=gltf.scene,box=new THREE.Box3().setFromObject(m),size=box.getSize(new THREE.Vector3());
-          var s=1.7/Math.max(size.y,.001);m.scale.setScalar(s);box.setFromObject(m);
-          m.position.set(-(box.min.x+box.max.x)/2,-box.min.y,-(box.min.z+box.max.z)/2);
-          m.rotation.y=MODEL_YAW_OFFSET;
-          m.traverse(function(o){if(o.isMesh){o.castShadow=SHADOWS;o.receiveShadow=SHADOWS;}});
-          playerRoot.clear();playerRoot.add(m);
-          if(gltf.animations&&gltf.animations.length){
-            mixer=new THREE.AnimationMixer(m);mixer.clipAction(gltf.animations[0]).play();
-          }
-        }catch(e){showErr(STR.errTagModel,e);}
-      },undefined,function(){
-        setDiagErr(STR.diagModelFallback);
-      });
-    }catch(e){showErr(STR.errTagGLTF,e);}
-  }
+}
+
+// 由 main 在预加载完成后调用：用 GLB 模型替换保底小人
+export function applyPlayerModel(gltf){
+  try{
+    var m=gltf.scene,box=new THREE.Box3().setFromObject(m),size=box.getSize(new THREE.Vector3());
+    var s=1.7/Math.max(size.y,.001);m.scale.setScalar(s);box.setFromObject(m);
+    m.position.set(-(box.min.x+box.max.x)/2,-box.min.y,-(box.min.z+box.max.z)/2);
+    m.rotation.y=MODEL_YAW_OFFSET;
+    m.traverse(function(o){if(o.isMesh){o.castShadow=SHADOWS;o.receiveShadow=SHADOWS;}});
+    playerRoot.clear();playerRoot.add(m);
+    if(gltf.animations&&gltf.animations.length){
+      mixer=new THREE.AnimationMixer(m);mixer.clipAction(gltf.animations[0]).play();
+    }
+  }catch(e){showErr(STR.errTagModel,e);}
 }
 
 // 由 visuals 每帧调用：同步模型位置 / 朝向 / 倾斜 / 落地压扁

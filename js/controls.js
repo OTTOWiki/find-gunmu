@@ -10,6 +10,7 @@ import { initAudio, setMuted, isMuted } from './audio.js';
 import { renderer } from './render.js';
 import { state, p, doDash, eatNut, bufferJump } from './physics.js';
 import { throwBox, startRun, gotoMenu } from './entities.js';
+import { isReady } from './assets.js';
 
 export const keys={};
 export let touchJump=false;
@@ -121,12 +122,12 @@ export function initControls(){
   });
   document.addEventListener('contextmenu',function(e){e.preventDefault();});
 
-  // 主菜单：两个模式按钮（不再「点任意处开始」）
+  // 主菜单：两个模式按钮（不再「点任意处开始」）；素材未加载完不可开局
   $('btn-mode-normal').addEventListener('click',function(){
-    if(state!=='start')return;resetInput();initAudio();startRun('normal');
+    if(state!=='start'||!isReady())return;resetInput();initAudio();startRun('normal');
   });
   $('btn-mode-practice').addEventListener('click',function(){
-    if(state!=='start')return;resetInput();initAudio();startRun('practice');
+    if(state!=='start'||!isReady())return;resetInput();initAudio();startRun('practice');
   });
   $('btn-sound').addEventListener('click',function(){setMuted(!isMuted());refreshSoundBtn();});
   $('btn-retry').addEventListener('click',function(){

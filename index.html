@@ -8,7 +8,7 @@
 <!-- 样式：css/style.css ｜ 逻辑：js/*.js（ES Module，入口 js/boot.js） -->
 <link rel="stylesheet" href="css/style.css">
 </head>
-<body data-state="start">
+<body data-state="start" data-assets="loading">
 <div id="wrap">
   <div id="diag"></div>
   <div id="vignette"></div><div id="flash"></div><div id="crosshair"></div>
@@ -48,6 +48,7 @@
       <h1 id="st-h1">寻找棍母 <span id="st-tag">超能漫步版</span></h1>
       <div class="bang" id="st-bang">!寻找棍母!</div>
       <p class="lead"><span id="st-lead1">穿梭飞门，在暗影回廊中寻回你的 </span><b id="blank">_________</b><span id="st-lead2"> ...</span></p>
+      <div id="st-loading" class="hint">正在加载运行库...</div>
       <div id="st-menu">
         <button class="menu-btn primary" id="btn-mode-normal">
           <b id="btn-mode-normal-t">正式模式</b><i id="btn-mode-normal-d">90 秒 · 冲击更深层级</i>

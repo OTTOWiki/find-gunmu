@@ -6,6 +6,7 @@
 
 import { scene, SHADOWS, WALL_H, TILE } from './render.js';
 import { p } from './physics.js';
+import { assets } from './assets.js';
 
 // 当前关卡色相：由 setupLevel 通过 setHue 写入，同时更新背景与雾色
 let hue=260;
@@ -77,29 +78,22 @@ var glowCv=document.createElement('canvas');glowCv.width=glowCv.height=64;
 })();
 var glowTex=new THREE.CanvasTexture(glowCv);
 
-var gunmuOK=false,waaoOK=false,gunmuAspect=1,waaoAspect=1;
+var gunmuOK=false,gunmuAspect=1,waaoAspect=1;
 var gunmuMat=new THREE.SpriteMaterial({transparent:true,depthWrite:false});
 var waaoMat=new THREE.SpriteMaterial({map:ghostTex,transparent:true,depthWrite:false});
-var itemImgs=[],itemBodies=[];
 
-if(window.THREE&&THREE.TextureLoader){
-  var texLoader=new THREE.TextureLoader();
-  texLoader.load('./gunmu.png',function(t){
-    t.encoding=THREE.sRGBEncoding;gunmuOK=true;
-    gunmuAspect=(t.image&&t.image.width&&t.image.height)?t.image.width/t.image.height:1;
-    gunmuMat.map=t;gunmuMat.needsUpdate=true;
-    for(var i=0;i<itemImgs.length;i++){
-      itemImgs[i].visible=true;itemImgs[i].scale.set(1.35*Math.min(gunmuAspect,2),1.35,1);
-    }
-    for(i=0;i<itemBodies.length;i++)itemBodies[i].visible=false;
-  });
-  texLoader.load('./waao.png',function(t){
-    t.encoding=THREE.sRGBEncoding;waaoOK=true;
-    waaoAspect=(t.image&&t.image.width&&t.image.height)?t.image.width/t.image.height:1;
-    waaoMat.map=t;waaoMat.needsUpdate=true;
-    var ew=1.9*Math.min(Math.max(waaoAspect,.4),1.8);
-    for(var i=0;i<enemySprites.length;i++)enemySprites[i].scale.set(ew,1.9,1);
-  });
+// 贴图由 assets 预加载完成后再由 initWorld 接上（AVIF 优先，不可达时用保底模型）
+function useLoadedTextures(){
+  var gt=assets.gunmu,wt=assets.waao;
+  if(gt){
+    gunmuOK=true;
+    gunmuAspect=(gt.image&&gt.image.width&&gt.image.height)?gt.image.width/gt.image.height:1;
+    gunmuMat.map=gt;gunmuMat.needsUpdate=true;
+  }
+  if(wt){
+    waaoAspect=(wt.image&&wt.image.width&&wt.image.height)?wt.image.width/wt.image.height:1;
+    waaoMat.map=wt;waaoMat.needsUpdate=true;
+  }
 }
 
 function gridTex(h,bright){
@@ -123,10 +117,10 @@ function makeGunmu(){
   var e1=new THREE.Mesh(new THREE.SphereGeometry(.035,6,6),eyeM);e1.position.set(.065,1.1,.16);
   var e2=e1.clone();e2.position.x=-.065;
   body.add(stick,arm1,arm2,head,e1,e2);body.visible=!gunmuOK;
-  g.add(body);itemBodies.push(body);
+  g.add(body);
 
   var img=new THREE.Sprite(gunmuMat);img.scale.set(1.35*Math.min(gunmuAspect,2),1.35,1);img.position.y=.78;img.visible=gunmuOK;
-  g.add(img);itemImgs.push(img);
+  g.add(img);
 
   var halo=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,color:0xffaa33,transparent:true,opacity:.65,blending:THREE.AdditiveBlending,depthWrite:false}));
   halo.scale.set(2.0,2.0,1);halo.position.y=.6;
@@ -137,6 +131,7 @@ function makeGunmu(){
 }
 
 export function initWorld(){
+  useLoadedTextures();
   scene.add(worldRoot);
   wallInst=new THREE.InstancedMesh(new THREE.BoxGeometry(TILE,WALL_H,TILE),new THREE.MeshLambertMaterial({color:0xffffff}),WALLCAP);
   wallInst.castShadow=SHADOWS;wallInst.receiveShadow=SHADOWS;wallInst.frustumCulled=false;worldRoot.add(wallInst);

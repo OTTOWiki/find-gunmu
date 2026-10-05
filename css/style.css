@@ -140,6 +140,11 @@ body[data-state="gate"]  #screen-gate{opacity:1;pointer-events:auto}
 }
 #screen-start .foot{position:static;margin-top:2px}
 #st-menu{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;width:100%}
+/* 素材未加载完时开始按钮不可点；不可达素材用警示色提示 */
+#st-loading{margin-top:2px}
+#st-loading:empty{display:none}
+body[data-assets="loading"] .menu-btn{opacity:.45;pointer-events:none;filter:grayscale(.4)}
+body[data-assets="partial"] #st-loading{color:#ffaa33}
 .menu-btn{
   flex:1 1 200px;max-width:260px;display:flex;flex-direction:column;align-items:center;gap:6px;
   padding:16px 22px;border-radius:16px;border:2px solid #6b4fa3;background:rgba(30,16,58,.9);color:#fff;

@@ -36,6 +36,13 @@ window.GAME_STRINGS = {
   btnExit: '退出',
   btnMenu: '返回主菜单',
 
+  // 资源加载（运行库 / 贴图 / 模型）
+  assetLoadingLibs: '正在加载运行库...',
+  assetLoading: function(done,total){ return '正在加载素材 '+done+'/'+total+' ...'; },
+  assetReady: '素材已就绪 · 选择模式开始',
+  assetPartial: function(list){ return '⚠ 素材不可达：'+list+'（已启用保底素材）'; },
+  assetNames: {gunmu:'棍母贴图',waao:'哇袄贴图',model:'玩家模型'},
+
   // 结算与飞门
   gateEntering: '进入飞门...',
   gateClear: function(lv){ return '层级 ' + lv + ' · 棍母已集齐<br>飞门轰鸣开启 →'; },
@@ -83,6 +90,7 @@ window.GAME_STRINGS = {
   diagWebGLError: '⚠ WebGL 不可用，请开启浏览器硬件加速',
   diagModelFallback: 'daoli.glb 加载跳过，启用保底模型',
   diagCoreLibBlocked: '⚠ Three.js 核心库加载受阻，请检查网络',
+  diagMissing: function(list){ return '⚠ 资源不可达: '+list; },
   diagBootErrorPrefix: '⚠ 启动异常: ',
   diagDiagPrefix: '干飞马 · ',
 

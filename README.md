@@ -26,6 +26,32 @@
 
 ---
 
+## 资源加载
+
+开局前会**先把全部素材加载完**，主菜单的进度行会实时显示 `正在加载素材 n/3`，
+加载完成前开始按钮不可点（`body[data-assets="loading"]`），因此不会出现「进了游戏贴图还没到」的情况。
+
+| 资源 | 首选 | 回退 |
+| --- | --- | --- |
+| 棍母贴图 | `gunmu.avif`（无损 AVIF） | `gunmu.png` |
+| 哇袄贴图 | `waao.avif`（无损 AVIF） | `waao.png` |
+| 玩家模型 | `daoli.glb` | 程序化小人 |
+
+- **无损 AVIF**：两张贴图用 `avifenc -l`（lossless，YUV444 全范围）从原 PNG 转换，解码后与原图**逐像素一致**（`magick compare -metric AE` = 0），体积分别减少约 16% / 9%。
+- **AVIF 回退**：旧浏览器不支持 AVIF 时 `Image.onerror` 触发，自动改用同目录 PNG，不会因新格式而丢贴图。
+- **不可达才降级**：只有候选地址全部失败才记入 `failedAssets`，此时菜单显示「⚠ 素材不可达：…（已启用保底素材）」、左上角诊断同步提示，游戏依然可玩。
+
+重新生成 AVIF：
+
+```bash
+avifenc -l -s 6 -j all gunmu.png gunmu.avif   # --lossless
+avifenc -l -s 6 -j all waao.png  waao.avif
+# 校验无损：解码后与原 PNG 逐像素比对，AE 必须为 0
+avifdec gunmu.avif /tmp/rt.png && magick compare -metric AE gunmu.png /tmp/rt.png null:
+```
+
+---
+
 ## 快速开始
 
 ES Module 受同源策略限制，**不能用 `file://` 直接双击打开**，必须通过 HTTP 访问（不需要任何构建步骤）：
@@ -70,7 +96,8 @@ npx serve .
 │   └── style.css       # 全部界面样式（原 <style> 内容）
 ├── js/
 │   ├── boot.js         # 入口：多 CDN 容灾加载三方库 → 动态 import main.js
-│   ├── main.js         # initGame()：按依赖顺序初始化各模块
+│   ├── main.js         # initGame()：初始化各模块 → 预加载素材 → 构建世界并开放开局
+│   ├── assets.js       # MODULE 13 资源预加载（AVIF→PNG 回退、进度、不可达清单）
 │   ├── strings.js      # MODULE 0  全局字符串字典
 │   ├── core.js         # CORE      DOM 工具 / 视口尺寸 / 触屏判定 / 静态文案注入
 │   ├── diag.js         # MODULE 1  错误上报、FPS 诊断、振动
@@ -78,16 +105,18 @@ npx serve .
 │   ├── render.js       # MODULE 3  渲染器 / 场景 / 相机 / 灯光
 │   ├── post.js         # MODULE 4  后期着色管线（拖影、色差、暗角、噪点）
 │   ├── particles.js    # MODULE 5  点精灵粒子池
-│   ├── player.js       # MODULE 6  玩家模型（GLB + 保底模型）
+│   ├── player.js       # MODULE 6  玩家模型（预加载 GLB + 保底小人）
 │   ├── maze.js         # MODULE 7  程序化无限迷宫、材质、物品与敌人精灵
 │   ├── physics.js      # MODULE 8  移动 / 碰撞 / 跳跃 / 冲刺 / 相机震动状态
 │   ├── entities.js     # MODULE 9  关卡生成、收集、敌人 AI、投掷物、结算
 │   ├── controls.js     # MODULE 10 摇杆 / 键鼠 / 技能按钮 / 全屏
 │   ├── visuals.js      # MODULE 11 相机运动、HUD、主更新与渲染循环
 │   └── ...
-├── daoli.glb           # 玩家模型（加载失败时自动回退到程序化小人）
-├── gunmu.png           # 「棍母」贴图（收集物）
-└── waao.png            # 「哇袄」贴图（敌人）
+├── daoli.glb           # 玩家模型（不可达时回退到程序化小人）
+├── gunmu.avif          # 「棍母」贴图（无损 AVIF，收集物）
+├── gunmu.png           #   └ 回退源图
+├── waao.avif           # 「哇袄」贴图（无损 AVIF，敌人）
+└── waao.png            #   └ 回退源图
 ```
 
 ---
@@ -98,17 +127,19 @@ npx serve .
 index.html
   └─ <script type="module" src="js/boot.js">
        ├─ 依次尝试多个 CDN 加载 three.js → GLTFLoader → nipplejs → tween.js
-       └─ 全部尝试完成后 await import('./main.js') → initGame()
+       └─ 全部尝试完成后 await import('./main.js') → initGame(libStatus)
             ├─ applyStaticStrings()          注入全部界面文案（含主菜单）
             ├─ initRenderer()                WebGL 不可用时直接中止
             ├─ initPost() / initParticles() / initPlayer() / initControls()
-            ├─ initWorld() + setupLevel(1)   生成迷宫与第 1 层
+            ├─ await preload()               等待全部可达素材（菜单显示 n/3，按钮暂不可点）
+            ├─ applyPlayerModel() / initWorld() + setupLevel(1)
+            ├─ 标记 data-assets=ready|partial 并提示不可达资源
             └─ startLoop()                   启动 requestAnimationFrame 主循环
 ```
 
-初始 `state='start'`，主菜单覆盖层可见；点「正式模式 / 练习模式」按钮（或结算页按钮）
-才会 `startRun(mode)` 进入 `gate → playing`。主循环始终在渲染，但 `physics` / `entities`
-只在 `playing` 状态更新。
+初始 `state='start'`，主菜单覆盖层可见；素材加载完成前模式按钮不可点，就绪后点
+「正式模式 / 练习模式」按钮（或结算页按钮）才会 `startRun(mode)` 进入 `gate → playing`。
+主循环始终在渲染，但 `physics` / `entities` 只在 `playing` 状态更新。
 
 三方库以传统 `<script>` 方式注入，暴露为全局变量（`THREE` / `nipplejs` / `TWEEN`），
 游戏模块直接引用这些全局对象，因此**不需要打包器**。
@@ -140,6 +171,8 @@ ES Module 的 `import` 绑定是**只读**的，因此约定：
 | `entities` | `gotoMenu()` | 本局作废并返回主菜单（playing / lost 状态可用） |
 | `audio` | `setMuted(v)` / `isMuted()` | 全局音效开关（经 master gain，写入 `localStorage['gunmu.muted']`） |
 | `audio` | `silenceAmbient()` | 结算 / 返回菜单时关闭风声、漂移声与底噪 |
+| `assets` | `preload(onProgress)` | 并行加载全部素材，返回 `{total,failed}`；可达的全部完成后才 resolve |
+| `assets` | `isReady()` / `assets` / `failedAssets` | 是否已加载完 / 已加载的贴图与模型 / 不可达清单 |
 | `maze` | `setHue(h)` | 关卡色相（同时更新场景背景与雾色） |
 | `maze` | `setCeilingFlicker(flick)` / `scrollWorldTo(x,z)` / `syncSprites(...)` | 天花板灯、地板滚动、实体精灵同步 |
 | `post` | `setMotionBlur(...)` / `resetMotionBlur()` | 拖影强度与切层重置 |
@@ -177,13 +210,19 @@ ES Module 的 `import` 绑定是**只读**的，因此约定：
 浏览器未开启硬件加速，或设备不支持 WebGL。
 
 **模型/贴图没加载出来**
-`daoli.glb` / `gunmu.png` / `waao.png` 必须与 `index.html` 同目录；加载失败会自动回退到程序化模型或保真贴图占位，游戏仍可玩。
+`daoli.glb` / `gunmu.avif`（或回退 `gunmu.png`）/ `waao.avif`（或回退 `waao.png`）必须与 `index.html` 同目录。
+主菜单会显示「⚠ 素材不可达：…（已启用保底素材）」，此时贴图回退到程序化占位，游戏仍可玩；
+把缺失文件补齐后刷新即可。
+
+**浏览器不支持 AVIF**
+会自动改用同目录 PNG（`Image.onerror` 回退），无需手动处理。
 
 ---
 
 ## 开发提示
 
 - 新增一个模块：在 `js/` 下建文件，用 `export` 暴露接口，并在 `main.js` 的 `initGame()` 里按需调用其 `init*()`。
+- 新增素材：把文件放进仓库根目录，并在 `js/assets.js` 的 `RESOURCES` 里登记（可选多个候选地址组成回退链）。
 - 需要其它模块的状态时：只读就 `import`，要写入就调用对方导出的函数（见「模块状态约定」）。
 - 文案统一放在 `js/strings.js`，界面与提示不要在业务代码里硬编码。
 - 语法自检：`for f in js/*.js; do node --check "$f"; done`
